@@ -358,6 +358,20 @@ html, body {
   padding:2px 3px; touch-action:none; user-select:none; line-height:1;
 }
 .rank-handle:active { color:var(--accent); cursor:grabbing; }
+.rank-edit {
+  font-size:14px; color:var(--muted); cursor:pointer; flex-shrink:0;
+  padding:4px 3px; user-select:none; transition:color .15s; line-height:1;
+  opacity:.7;
+}
+.rank-edit:active { color:var(--accent4); opacity:1; }
+.rank-text-input {
+  flex:1; background:transparent; border:none;
+  border-bottom:1.5px solid var(--accent4);
+  color:var(--text); font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:13.5px; outline:none; padding:1px 0;
+  direction:ltr !important; text-align:left !important;
+  min-width:0;
+}
 .rank-legend {
   display:flex; justify-content:space-between; font-size:11px;
   font-weight:600; margin-top:8px; padding:0 2px;
@@ -1226,10 +1240,40 @@ function buildRankList() {
     item.innerHTML =
       `<div class="rank-badge" onclick="rankBadgeClick(this)">${i + 1}</div>` +
       `<div class="rank-item-text">${text}</div>` +
+      `<div class="rank-edit" onclick="rankEditClick(this)" title="Edit this item">✏</div>` +
       `<div class="rank-handle">⠿</div>`;
     list.appendChild(item);
   });
   attachRankEvents();
+}
+
+function rankEditClick(editBtn) {
+  const item = editBtn.closest('.rank-item');
+  const textDiv = item.querySelector('.rank-item-text');
+  if (!textDiv) return;
+  const originalText = textDiv.textContent;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'rank-text-input';
+  input.value = originalText;
+  input.maxLength = 50;
+  input.setAttribute('dir', 'ltr');
+  textDiv.replaceWith(input);
+  editBtn.style.visibility = 'hidden';
+  input.focus();
+  input.select();
+  let cancelled = false;
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { cancelled = true; input.blur(); }
+  });
+  input.addEventListener('blur', () => {
+    if (cancelled) { buildRankList(); return; }
+    const newText = input.value.trim() || originalText;
+    const idx = rankOrder.indexOf(originalText);
+    if (idx > -1) rankOrder[idx] = newText;
+    buildRankList();
+  });
 }
 
 function rankBadgeClick(badge) {
