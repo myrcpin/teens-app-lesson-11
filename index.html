@@ -322,6 +322,56 @@ html, body {
 .section-img { width: 100%; height: 185px; object-fit: cover; border-radius: var(--radius); margin-bottom: 14px; display: block; background: var(--surface2); opacity: 0; transition: opacity 0.4s ease; }
 .section-img.loaded { opacity: 1; }
 .img-caption { font-size: 11px; color: var(--muted); text-align: center; margin-top: -8px; margin-bottom: 14px; font-style: italic; }
+
+/* ── Rank Your Rage ── */
+.rank-list { display:flex; flex-direction:column; gap:6px; }
+.rank-item {
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:10px; padding:10px 12px;
+  transition:border-color .18s, opacity .18s;
+  cursor:default;
+}
+.rank-item.is-dragging { opacity:.25; }
+.rank-item.drop-above { border-top:2.5px solid var(--accent); }
+.rank-item.drop-below { border-bottom:2.5px solid var(--accent); }
+.rank-badge {
+  min-width:28px; height:28px; border-radius:7px; padding:0 5px;
+  background:var(--surface); border:1.5px solid var(--border);
+  color:var(--accent); font-weight:700; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:text; flex-shrink:0; font-family:'Plus Jakarta Sans',sans-serif;
+  transition:border-color .18s;
+}
+.rank-badge:has(input) { border-color:var(--accent); background:rgba(245,200,66,.1); }
+.rank-badge input {
+  width:30px; height:22px; background:transparent; border:none; outline:none;
+  color:var(--accent); font-weight:700; font-size:13px; text-align:center;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  -moz-appearance:textfield;
+}
+.rank-badge input::-webkit-inner-spin-button,
+.rank-badge input::-webkit-outer-spin-button { display:none; }
+.rank-item-text { flex:1; font-size:13.5px; line-height:1.4; color:var(--text); }
+.rank-handle {
+  font-size:20px; color:var(--muted); cursor:grab; flex-shrink:0;
+  padding:2px 3px; touch-action:none; user-select:none; line-height:1;
+}
+.rank-handle:active { color:var(--accent); cursor:grabbing; }
+.rank-legend {
+  display:flex; justify-content:space-between; font-size:11px;
+  font-weight:600; margin-top:8px; padding:0 2px;
+}
+#rank-ghost {
+  position:fixed; pointer-events:none; z-index:9999; display:none;
+  align-items:center; gap:10px;
+  background:var(--surface); border:1.5px solid var(--accent);
+  border-radius:10px; padding:10px 12px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  font-size:13.5px; color:var(--text);
+  font-family:'Plus Jakarta Sans',sans-serif;
+  transform:scale(1.04); will-change:top;
+}
 </style>
 </head>
 <body>
@@ -373,18 +423,12 @@ html, body {
     </div>
 
     <div class="opener-warm">
-      <div class="opener-q">Rank each of these 1–10 (1 = "I'd be SO upset," 10 = "no big deal at all"). Then pick your TWO worst.</div>
-      <div class="opener-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="• Losing your keys
-• Sibling eats all your food
-• Phone battery dies
-• A 'D' on a final exam
-• A paper cut
-• Earbuds get stolen
-• A friend tells lies about you
-• Fender-bender accident
-• Internet down for 3 days
-
-Type your two worst here, and why..."></div>
+      <div class="opener-q">Rank these 1–10 (1 = most upsetting → 10 = barely registers). Drag <strong>⠿</strong> to reorder, or tap a number to type a new position.</div>
+      <div class="rank-list" id="rank-list"></div>
+      <div class="rank-legend">
+        <span style="color:var(--accent2)">1 = Most upsetting</span>
+        <span style="color:var(--green)">10 = No big deal</span>
+      </div>
     </div>
 
     <div class="verse-card" style="border-color: rgba(245,200,66,0.25); background: rgba(245,200,66,0.05)">
@@ -1147,6 +1191,167 @@ function showComplete() {
 
 updateProgress();
 updateDots();
+
+// ── Rank Your Rage ────────────────────────────────────────────
+const RANK_ITEMS = [
+  'Losing your keys',
+  'Sibling eats all your food',
+  'Phone battery dies',
+  "A 'D' on a final exam",
+  'A paper cut',
+  'Earbuds get stolen',
+  'A friend tells lies about you',
+  'Fender-bender accident',
+  'Internet down for 3 days',
+  'Getting left out of plans'
+];
+
+let rankOrder = [...RANK_ITEMS];
+let rDragText = null, rDragEl = null, rTouchOffY = 0;
+
+// floating ghost for touch drag
+const rGhost = document.createElement('div');
+rGhost.id = 'rank-ghost';
+document.body.appendChild(rGhost);
+
+function buildRankList() {
+  const list = document.getElementById('rank-list');
+  if (!list) return;
+  list.innerHTML = '';
+  rankOrder.forEach((text, i) => {
+    const item = document.createElement('div');
+    item.className = 'rank-item';
+    item.dataset.text = text;
+    item.draggable = true;
+    item.innerHTML =
+      `<div class="rank-badge" onclick="rankBadgeClick(this)">${i + 1}</div>` +
+      `<div class="rank-item-text">${text}</div>` +
+      `<div class="rank-handle">⠿</div>`;
+    list.appendChild(item);
+  });
+  attachRankEvents();
+}
+
+function rankBadgeClick(badge) {
+  if (badge.querySelector('input')) return;
+  const item = badge.closest('.rank-item');
+  const oldPos = parseInt(badge.textContent);
+  badge.innerHTML = `<input type="number" min="1" max="${rankOrder.length}" value="${oldPos}">`;
+  const inp = badge.querySelector('input');
+  inp.focus(); inp.select();
+  function commit() {
+    const v = parseInt(inp.value);
+    if (v >= 1 && v <= rankOrder.length && v !== oldPos) {
+      const text = item.dataset.text;
+      const fi = rankOrder.indexOf(text);
+      rankOrder.splice(fi, 1);
+      rankOrder.splice(v - 1, 0, text);
+      buildRankList();
+    } else {
+      badge.textContent = oldPos;
+    }
+  }
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') inp.blur();
+    if (e.key === 'Escape') { badge.textContent = oldPos; }
+  });
+}
+
+function attachRankEvents() {
+  const list = document.getElementById('rank-list');
+
+  list.querySelectorAll('.rank-item').forEach(item => {
+    // ── desktop drag ──
+    item.addEventListener('dragstart', e => {
+      rDragText = item.dataset.text;
+      setTimeout(() => item.classList.add('is-dragging'), 0);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('is-dragging');
+      list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drop-above','drop-below'));
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!rDragText || item.dataset.text === rDragText) return;
+      list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drop-above','drop-below'));
+      const mid = item.getBoundingClientRect().top + item.offsetHeight / 2;
+      item.classList.add(e.clientY < mid ? 'drop-above' : 'drop-below');
+    });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!rDragText || item.dataset.text === rDragText) return;
+      const mid = item.getBoundingClientRect().top + item.offsetHeight / 2;
+      const insertBefore = e.clientY < mid;
+      const targetText = item.dataset.text;
+      const fi = rankOrder.indexOf(rDragText);
+      rankOrder.splice(fi, 1);
+      let ti = rankOrder.indexOf(targetText);
+      if (!insertBefore) ti += 1;
+      rankOrder.splice(ti, 0, rDragText);
+      buildRankList();
+    });
+
+    // ── touch drag (handle only) ──
+    item.querySelector('.rank-handle').addEventListener('touchstart', rTouchStart, { passive: false });
+  });
+}
+
+function rTouchStart(e) {
+  e.preventDefault();
+  rDragEl = e.currentTarget.closest('.rank-item');
+  rDragText = rDragEl.dataset.text;
+  const t = e.touches[0];
+  const rect = rDragEl.getBoundingClientRect();
+  rTouchOffY = t.clientY - rect.top;
+  rGhost.innerHTML =
+    `<div class="rank-badge">${rankOrder.indexOf(rDragText) + 1}</div>` +
+    `<div class="rank-item-text">${rDragText}</div>`;
+  rGhost.style.cssText =
+    `display:flex; width:${rect.width}px; left:${rect.left}px; top:${t.clientY - rTouchOffY}px;`;
+  rDragEl.classList.add('is-dragging');
+  document.addEventListener('touchmove', rTouchMove, { passive: false });
+  document.addEventListener('touchend', rTouchEnd, { once: true });
+}
+
+function rTouchMove(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  rGhost.style.top = (t.clientY - rTouchOffY) + 'px';
+  const list = document.getElementById('rank-list');
+  list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drop-above','drop-below'));
+  let closest = null, closestDist = Infinity;
+  list.querySelectorAll('.rank-item:not(.is-dragging)').forEach(item => {
+    const r = item.getBoundingClientRect();
+    const mid = r.top + r.height / 2;
+    const d = Math.abs(t.clientY - mid);
+    if (d < closestDist) { closestDist = d; closest = { item, mid }; }
+  });
+  if (closest) closest.item.classList.add(t.clientY < closest.mid ? 'drop-above' : 'drop-below');
+}
+
+function rTouchEnd() {
+  document.removeEventListener('touchmove', rTouchMove);
+  rGhost.style.display = 'none';
+  if (rDragEl) rDragEl.classList.remove('is-dragging');
+  const list = document.getElementById('rank-list');
+  const above = list.querySelector('.rank-item.drop-above');
+  const below = list.querySelector('.rank-item.drop-below');
+  list.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drop-above','drop-below'));
+  const target = above || below;
+  if (target && rDragText && target.dataset.text !== rDragText) {
+    const fi = rankOrder.indexOf(rDragText);
+    rankOrder.splice(fi, 1);
+    let ti = rankOrder.indexOf(target.dataset.text);
+    if (below) ti += 1;
+    rankOrder.splice(ti, 0, rDragText);
+    buildRankList();
+  }
+  rDragEl = null; rDragText = null;
+}
+
+buildRankList();
 
 function enforceLTR(el) {
   el.setAttribute('dir', 'ltr');
