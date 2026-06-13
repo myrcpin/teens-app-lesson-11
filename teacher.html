@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Teacher Guide — Survivor: Patmos · Lesson 11</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f1a; --surface: #161828; --surface2: #1e2035;
+  --border: rgba(255,255,255,0.08); --text: #eeeef5;
+  --muted: rgba(238,238,245,0.5); --accent: #f5c842;
+  --accent2: #ff6b6b; --accent3: #4ecdc4; --accent4: #a78bfa;
+  --green: #4ade80; --red: #f87171;
+  --radius: 16px; --radius-sm: 10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
+
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .5s;z-index:100;border-radius:0 2px 2px 0}
+
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateX(40px);transition:opacity .35s ease,transform .35s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.exit-left{opacity:0;transform:translateX(-40px)}
+
+.screen-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px}
+.screen-body::-webkit-scrollbar{display:none}
+
+/* header */
+.s-header{padding:12px 14px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.s-step{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.s-dots{display:flex;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);transition:background .3s,transform .3s}
+.dot.done{background:var(--accent);border-color:var(--accent)}
+.dot.current{background:var(--accent2);border-color:var(--accent2);transform:scale(1.3)}
+
+/* timer bar */
+.timer-bar{display:flex;align-items:center;gap:10px;margin:8px 14px 0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 13px;flex-shrink:0}
+.timer-display{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent);min-width:64px;letter-spacing:1px;transition:color .3s}
+.timer-display.warn{color:#fbbf24}
+.timer-display.over{color:var(--red);animation:flash 1s ease infinite alternate}
+@keyframes flash{from{opacity:1}to{opacity:.4}}
+.timer-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;flex:1}
+.timer-btns{display:flex;gap:6px}
+.t-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;padding:6px 11px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+.t-btn:active{transform:scale(.93)}
+.t-btn.go{background:var(--accent);color:#0d0f1a;border-color:var(--accent)}
+
+/* section title card */
+.stc{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;margin-bottom:10px;position:relative;overflow:hidden}
+.stc::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,var(--glow,rgba(245,200,66,.12)) 0%,transparent 70%)}
+.stc-eye{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.stc h2{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;line-height:1.15}
+
+/* verse card */
+.verse-card{background:linear-gradient(135deg,rgba(78,205,196,.08),rgba(78,205,196,.03));border:1px solid rgba(78,205,196,.25);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px}
+.verse-card blockquote{font-style:italic;font-size:14px;line-height:1.65;margin-bottom:6px}
+.verse-card cite{font-size:11px;font-weight:700;color:var(--accent3);letter-spacing:.5px}
+
+/* collapsible card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.card-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card-eye{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.card-ttl{font-size:14px;font-weight:700}
+.card-chevron{font-size:14px;color:var(--muted);transition:transform .25s;flex-shrink:0}
+.card.open .card-chevron{transform:rotate(180deg)}
+.card-body{padding:0 14px 14px;border-top:1px solid var(--border);padding-top:12px;font-size:13.5px;line-height:1.7;color:var(--text);display:none}
+.card.open .card-body{display:block}
+.card-body p+p{margin-top:8px}
+.card-body em,.card-body strong{color:var(--accent);font-style:normal;font-weight:600}
+
+/* Q&A card */
+.qa{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.qa-head{padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+.qa-num{width:24px;height:24px;border-radius:50%;background:var(--accent4);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.qa-q{font-size:14px;font-weight:600;line-height:1.45;flex:1}
+.qa-type{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.qa-body{border-top:1px solid var(--border);padding:12px 14px}
+
+.ans-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+.ans-txt{font-size:13px;line-height:1.6;color:var(--text);margin-bottom:8px}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:3px 0;font-size:13px;line-height:1.4}
+.opt .tick{flex-shrink:0;margin-top:1px;font-size:13px}
+.opt.c{color:var(--green)}
+.opt.w{color:var(--muted);opacity:.55}
+
+/* push further */
+.push{background:rgba(78,205,196,.07);border:1px solid rgba(78,205,196,.2);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px}
+.push-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent3);margin-bottom:4px}
+.push-txt{font-size:13px;line-height:1.55;color:var(--text);font-style:italic}
+
+/* activity */
+.act{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:var(--radius);padding:13px;margin-bottom:10px}
+.act-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent4);margin-bottom:8px}
+.act-sent{font-style:italic;font-size:14px;line-height:1.75;margin-bottom:10px}
+.blank{color:var(--accent);font-style:normal;font-weight:700;border-bottom:2px solid var(--accent);padding:0 3px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip{padding:4px 10px;border-radius:50px;font-size:12px;font-weight:600}
+.chip.c{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.chip.w{background:var(--surface2);color:var(--muted);border:1px solid var(--border);opacity:.6}
+.opts-lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+
+/* big idea */
+.big-idea{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid rgba(245,200,66,.2);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.bi-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.bi-txt{font-size:13.5px;line-height:1.65}
+
+/* timeline */
+.timeline{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.tl-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border)}
+.tl-row:last-child{border-bottom:none}
+.tl-time{padding:9px 10px;font-size:12px;font-weight:700;color:var(--accent);min-width:52px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border);background:rgba(245,200,66,.04);flex-shrink:0}
+.tl-name{padding:9px 12px;font-size:13px;font-weight:600;flex:1;display:flex;align-items:center}
+.tl-focus{padding:9px 10px;font-size:11px;color:var(--muted);display:flex;align-items:center;max-width:110px;line-height:1.3;flex-shrink:0}
+.tl-row.hdr .tl-time,.tl-row.hdr .tl-name,.tl-row.hdr .tl-focus{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+
+/* challenge items */
+.ch-item{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:8px;align-items:flex-start}
+.ch-ico{font-size:20px;flex-shrink:0}
+.ch-ttl{font-size:13.5px;font-weight:700;margin-bottom:2px}
+.ch-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* prayer / followup */
+.prayer{background:rgba(245,200,66,.05);border:1px solid rgba(245,200,66,.18);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px}
+.prayer-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.prayer-txt{font-size:13px;line-height:1.65;font-style:italic}
+.followup{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:var(--radius);padding:13px 15px}
+.followup-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent4);margin-bottom:6px}
+.followup-txt{font-size:13px;line-height:1.65}
+
+/* teacher badge */
+.t-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);border-radius:50px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase}
+
+/* overview */
+#s-overview .ov-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 14px 90px}
+#s-overview .ov-body::-webkit-scrollbar{display:none}
+.ov-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1.05;margin:12px 0 4px}
+.ov-sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+
+/* nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;padding:10px 14px 18px;background:linear-gradient(to top,var(--bg) 70%,transparent);display:flex;gap:10px;z-index:50}
+.btn{border:none;border-radius:50px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:15px;cursor:pointer;padding:14px 20px;transition:transform .15s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(.96)}
+.btn-primary{flex:1;background:var(--accent);color:#0d0f1a}
+.btn-back{background:var(--surface2);color:var(--muted);border:1px solid var(--border);min-width:52px;font-size:18px}
+.btn-ghost{flex:1;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="width:0%"></div>
+
+<!-- ═══════ OVERVIEW ═══════ -->
+<div class="screen active" id="s-overview">
+  <div class="ov-body">
+    <div class="t-badge">🎓 Teacher Guide</div>
+    <h1 class="ov-title">Survivor: Patmos</h1>
+    <p class="ov-sub">Cornerstone Connections · Lesson 11 · June 13, 2026</p>
+
+    <div class="big-idea">
+      <div class="bi-lbl">Big Idea</div>
+      <div class="bi-txt">Suffering for doing what's right isn't a sign God has abandoned you. John was exiled to a prison island for his faith — and from there received the most incredible vision in the Bible. How we respond to hardship can become our greatest testimony.</div>
+    </div>
+
+    <div class="verse-card">
+      <blockquote>"I, John, your brother and companion in the suffering and kingdom and patient endurance that are ours in Jesus, was on the island of Patmos because of the word of God and the testimony of Jesus."</blockquote>
+      <cite>— Revelation 1:9 (NIV) — Memory Verse</cite>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-row hdr"><div class="tl-time">Time</div><div class="tl-name">Section</div><div class="tl-focus">Focus</div></div>
+      <div class="tl-row"><div class="tl-time">10 min</div><div class="tl-name">Opener — Rank Your Rage</div><div class="tl-focus">Perspective</div></div>
+      <div class="tl-row"><div class="tl-time">20 min</div><div class="tl-name">FP1 — Survivor: Patmos</div><div class="tl-focus">Rev 1:1, 9</div></div>
+      <div class="tl-row"><div class="tl-time">20 min</div><div class="tl-name">FP2 — Small Stuff vs. Real Stuff</div><div class="tl-focus">2 Cor 4:17</div></div>
+      <div class="tl-row"><div class="tl-time">20 min</div><div class="tl-name">FP3 — Strong in Weakness</div><div class="tl-focus">2 Cor 12:9–10</div></div>
+      <div class="tl-row"><div class="tl-time">15 min</div><div class="tl-name">FP4 — Peace, Not a Doormat</div><div class="tl-focus">Luke 6:22, 27–36</div></div>
+      <div class="tl-row"><div class="tl-time">5 min</div><div class="tl-name">Challenge + Closing Prayer</div><div class="tl-focus">Application</div></div>
+    </div>
+
+    <div style="text-align:center;padding:4px 0 8px">
+      <a href="index.html" style="font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;letter-spacing:.5px">→ Open Student App</a>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-primary" onclick="goNext()">Start Session →</button>
+  </div>
+</div>
+
+<!-- ═══════ OPENER ═══════ -->
+<div class="screen" id="s-opener">
+  <div class="s-header"><span class="s-step">Opener</span><div class="s-dots" id="dots-opener"></div></div>
+  <div class="timer-bar">
+    <div class="timer-display" id="td-opener">10:00</div>
+    <div class="timer-label">minutes</div>
+    <div class="timer-btns">
+      <button class="t-btn go" id="tb-opener" onclick="timerToggle('opener')">▶</button>
+      <button class="t-btn" onclick="timerReset('opener')">↺</button>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="stc" style="--glow:rgba(245,200,66,.15)">
+      <div class="stc-eye" style="color:var(--accent)">Warm-Up · 10 minutes</div>
+      <h2>Rank Your Rage</h2>
+    </div>
+
+    <div class="card" id="c-opener-how">
+      <div class="card-head" onclick="toggleCard('c-opener-how')">
+        <div><div class="card-eye">How to run it</div><div class="card-ttl">Instructions</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p>Hand out (or read aloud) the list of everyday annoyances. Teens rank each 1–10: <strong>1 = "I'd be SO upset,"</strong> 10 = "no big deal." Give 2 minutes to rank silently, then compare.</p>
+        <p style="margin-top:10px;font-weight:700;font-size:13px">The List (read all 10 aloud):</p>
+        <p style="font-size:13px;color:var(--muted);line-height:1.9;margin-top:4px">1. Losing your keys · 2. Sibling eats all the food · 3. Phone battery dies · 4. A "D" on a final exam · 5. A paper cut · 6. Earbuds get stolen · 7. A friend tells lies about you · 8. Fender-bender accident · 9. Internet down for 3 days · 10. Getting left out of plans</p>
+      </div>
+    </div>
+
+    <div class="card" id="c-opener-disc">
+      <div class="card-head" onclick="toggleCard('c-opener-disc')">
+        <div><div class="card-eye">Discussion</div><div class="card-ttl">What to ask</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p><em>"Which one did most people rank as a 1 (worst)? Which as a 10? Why does the SAME thing feel huge to one person and tiny to another?"</em></p>
+        <div class="push">
+          <div class="push-lbl">→ Push Further</div>
+          <div class="push-txt">Hold onto your rankings — we'll come back to this list later in the lesson.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card open" id="c-opener-trans">
+      <div class="card-head" onclick="toggleCard('c-opener-trans')">
+        <div><div class="card-eye">Transition Line</div><div class="card-ttl">Say this to move on</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p style="font-style:italic;color:var(--accent3)">"We get worked up about losing our keys. Today we're going to meet someone who was exiled — alone, hard labor on a prison island — for telling people about Jesus. And from that island, he wrote one of the most amazing books in the whole Bible."</p>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">FP 1 →</button>
+  </div>
+</div>
+
+<!-- ═══════ FP1 ═══════ -->
+<div class="screen" id="s-fp1">
+  <div class="s-header"><span class="s-step">Focal Point 1 of 4</span><div class="s-dots" id="dots-fp1"></div></div>
+  <div class="timer-bar">
+    <div class="timer-display" id="td-fp1">20:00</div>
+    <div class="timer-label">minutes</div>
+    <div class="timer-btns">
+      <button class="t-btn go" id="tb-fp1" onclick="timerToggle('fp1')">▶</button>
+      <button class="t-btn" onclick="timerReset('fp1')">↺</button>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="stc" style="--glow:rgba(78,205,196,.15)">
+      <div class="stc-eye" style="color:var(--accent3)">Revelation 1:1, 9 · 20 minutes</div>
+      <h2>Survivor: Patmos</h2>
+    </div>
+    <div class="verse-card">
+      <blockquote>"I, John, your brother and companion in the suffering and kingdom and patient endurance that are ours in Jesus, was on the island of Patmos because of the word of God and the testimony of Jesus."</blockquote>
+      <cite>— Revelation 1:9 (NIV)</cite>
+    </div>
+    <div class="card" id="c-fp1-intro">
+      <div class="card-head" onclick="toggleCard('c-fp1-intro')">
+        <div><div class="card-eye">Intro — Read or Tell This</div><div class="card-ttl">Setting the scene</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p>Imagine a reality show called <em>"Survivor: Patmos."</em> One contestant: an old man named John. The setting: a rocky island prison where Roman prisoners did backbreaking labor — smashing rocks in quarries, day after day, far from home.</p>
+        <p>Why was John there? Not for any crime. He was exiled because he kept telling people about Jesus, and the authorities wanted him silenced for good.</p>
+        <p>The twist: it was ON that island, in the middle of that punishment, that John received the vision that became Revelation — a message that has encouraged Christians for 2,000 years.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">1</div><div><div class="qa-q">Why was John sent to the island of Patmos?</div><div class="qa-type">Open / simple recall</div></div></div>
+      <div class="qa-body">
+        <div class="ans-lbl">✓ Answer</div>
+        <div class="ans-txt">Because of "the word of God and the testimony of Jesus" — he kept preaching about Jesus even when it got him in trouble with the authorities.</div>
+        <div class="push"><div class="push-lbl">→ Push Further</div><div class="push-txt">Has anyone ever given you a hard time — even a small one — for talking about your faith?</div></div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">2</div><div><div class="qa-q">What was life like for a prisoner on Patmos? Pick ALL that apply.</div><div class="qa-type">Multi-select</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>Hard, exhausting physical labor (breaking rocks)</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Far away from family and friends</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>A punishment meant to "break" even tough criminals</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>A relaxing beach vacation</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>A reward for good behaviour</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">Patmos was a real penal colony — hard labor, isolation, punishment. John was genuinely suffering for his faith.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">3</div><div><div class="qa-q">If you were stuck far from everyone you love — just for telling the truth about Jesus — what do you think you'd do with your time?</div><div class="qa-type">Open / reflection</div></div></div>
+      <div class="qa-body">
+        <div class="ans-lbl">✓ Guide Note</div>
+        <div class="ans-txt">No single right answer. Guide toward: John used the time to focus on God, and God used that time to give him an incredible vision. Our hardest, loneliest seasons are often when God gets our full attention.</div>
+        <div class="push"><div class="push-lbl">→ Push Further</div><div class="push-txt">What's something in your life right now that feels like your own 'Patmos' — a hard, lonely, or unfair situation?</div></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="act-lbl">✏️ Fill in the Blanks — Answers</div>
+      <div class="act-sent">I, John, your brother and companion in the <span class="blank">suffering</span> and kingdom and patient <span class="blank">endurance</span> that are ours in Jesus, was on the island of Patmos.</div>
+      <div class="opts-lbl">FIVE OPTIONS TO READ ALOUD:</div>
+      <div class="chips"><div class="chip c">suffering ✓</div><div class="chip c">endurance ✓</div><div class="chip w">joy</div><div class="chip w">glory</div><div class="chip w">victory</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">FP 2 →</button>
+  </div>
+</div>
+
+<!-- ═══════ FP2 ═══════ -->
+<div class="screen" id="s-fp2">
+  <div class="s-header"><span class="s-step">Focal Point 2 of 4</span><div class="s-dots" id="dots-fp2"></div></div>
+  <div class="timer-bar">
+    <div class="timer-display" id="td-fp2">20:00</div>
+    <div class="timer-label">minutes</div>
+    <div class="timer-btns">
+      <button class="t-btn go" id="tb-fp2" onclick="timerToggle('fp2')">▶</button>
+      <button class="t-btn" onclick="timerReset('fp2')">↺</button>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="stc" style="--glow:rgba(255,107,107,.15)">
+      <div class="stc-eye" style="color:var(--accent2)">2 Cor 4:17, Ps 34:19 · 20 minutes</div>
+      <h2>Small Stuff vs. Real Stuff</h2>
+    </div>
+    <div class="verse-card">
+      <blockquote>"For our light and momentary troubles are achieving for us an eternal glory that far outweighs them all."</blockquote>
+      <cite>— 2 Corinthians 4:17 (NIV)</cite>
+    </div>
+    <div class="card" id="c-fp2-intro">
+      <div class="card-head" onclick="toggleCard('c-fp2-intro')">
+        <div><div class="card-eye">Intro — Read or Tell This</div><div class="card-ttl">Perspective section</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p>Go back to your "Rank Your Rage" list. A paper cut. A dead phone battery. Annoying, right? Now here's what Paul went through: shipwrecked, beaten with rods, stoned by a crowd, whipped multiple times, hungry and cold (2 Corinthians 11:25–28).</p>
+        <p>And how does Paul describe ALL of that? <em>"Light and momentary troubles"</em> — because he's comparing them to the eternal glory waiting with God. Perspective doesn't make hard things fake. But it CAN make them feel smaller.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">1</div><div><div class="qa-q">According to 2 Cor 4:17, how does Paul describe his troubles — even shipwrecks and beatings?</div><div class="qa-type">Radio — pick one</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>Light and momentary</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Unbearable and permanent</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Too much for anyone to handle</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>God's punishment for sin</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">Paul isn't saying his troubles didn't hurt — he's saying they're temporary compared to the eternal glory God has waiting.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">2</div><div><div class="qa-q">Which of these did Paul actually go through (2 Cor 11:25–28)? Pick ALL that apply.</div><div class="qa-type">Multi-select</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>Shipwrecked</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Beaten with rods</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Stoned by a crowd</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Stayed in five-star hotels</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Had an easy, stress-free life</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">Paul wasn't writing from comfort. He'd genuinely suffered more than almost anyone, and still called it "light." That's powerful perspective.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">3</div><div><div class="qa-q">Now that you've heard what Paul went through — would any of your Rank Your Rage answers change?</div><div class="qa-type">Open / reflection</div></div></div>
+      <div class="qa-body">
+        <div class="ans-lbl">✓ Guide Note</div>
+        <div class="ans-txt">Let teens be honest — some annoyances might still feel huge, and that's okay. The point isn't guilt. The point is God can help us hold problems with bigger-picture perspective: "this is hard, AND it's not the whole story."</div>
+        <div class="push"><div class="push-lbl">→ Push Further</div><div class="push-txt">Psalm 34:19 says the righteous person has MANY troubles — but God delivers them from ALL of them. Does that promise feel believable to you right now?</div></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="act-lbl">✏️ Fill in the Blanks — Answers</div>
+      <div class="act-sent">For our light and <span class="blank">momentary</span> troubles are achieving for us an eternal glory that far <span class="blank">outweighs</span> them all.</div>
+      <div class="opts-lbl">FIVE OPTIONS TO READ ALOUD:</div>
+      <div class="chips"><div class="chip c">momentary ✓</div><div class="chip c">outweighs ✓</div><div class="chip w">permanent</div><div class="chip w">ignores</div><div class="chip w">ends</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">FP 3 →</button>
+  </div>
+</div>
+
+<!-- ═══════ FP3 ═══════ -->
+<div class="screen" id="s-fp3">
+  <div class="s-header"><span class="s-step">Focal Point 3 of 4</span><div class="s-dots" id="dots-fp3"></div></div>
+  <div class="timer-bar">
+    <div class="timer-display" id="td-fp3">20:00</div>
+    <div class="timer-label">minutes</div>
+    <div class="timer-btns">
+      <button class="t-btn go" id="tb-fp3" onclick="timerToggle('fp3')">▶</button>
+      <button class="t-btn" onclick="timerReset('fp3')">↺</button>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="stc" style="--glow:rgba(167,139,250,.15)">
+      <div class="stc-eye" style="color:var(--accent4)">2 Corinthians 12:9–10 · 20 minutes</div>
+      <h2>Strong in Weakness</h2>
+    </div>
+    <div class="verse-card">
+      <blockquote>"My grace is sufficient for you, for my power is made perfect in weakness. ... For when I am weak, then I am strong."</blockquote>
+      <cite>— 2 Corinthians 12:9, 10 (NIV)</cite>
+    </div>
+    <div class="card" id="c-fp3-intro">
+      <div class="card-head" onclick="toggleCard('c-fp3-intro')">
+        <div><div class="card-eye">Intro — Read or Tell This</div><div class="card-ttl">Paul's thorn</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p>Paul had something he called a "thorn" — some kind of ongoing pain the Bible doesn't fully explain. Three times he begged God to take it away.</p>
+        <p>God's answer wasn't "yes" or "no." It was something better: <em>"My grace is sufficient for you, for my power is made perfect in weakness."</em></p>
+        <p>Paul's response is wild — he says he'll actually be GLAD about his weaknesses and hardships, because it's in those exact moments that God's power shows up most clearly.</p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">1</div><div><div class="qa-q">When Paul asked God to take away his weakness, what did God say?</div><div class="qa-type">Radio — pick one</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>"My grace is sufficient for you — my power is made perfect in weakness"</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>"I'll remove it right away"</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>"You don't have enough faith"</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>"Ask me again later"</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">God didn't remove the thorn — He promised something better: His grace would be enough, and His power shows up best through Paul's weakness.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">2</div><div><div class="qa-q">Which can actually become a place where God's power shows up? Pick ALL that apply.</div><div class="qa-type">Multi-select</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>Weaknesses</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Insults</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Hardships and difficulties</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Having everything go perfectly, all the time</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Never needing anyone's help</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">The things we'd normally want to hide are actually where God's power is most visible — because it's obviously not coming from us.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">3</div><div><div class="qa-q">Think of a time you felt weak or embarrassed. Could God's strength have shown up in that moment? How?</div><div class="qa-type">Open / reflection</div></div></div>
+      <div class="qa-body">
+        <div class="ans-lbl">✓ Guide Note</div>
+        <div class="ans-txt">Encourage specific examples — a hard test, tough conversation, illness, fear of public speaking. God doesn't need us to be impressive. He works best when we admit we need help.</div>
+        <div class="push"><div class="push-lbl">→ Push Further</div><div class="push-txt">Is it hard to admit when you're weak or struggling? Why do you think that is?</div></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="act-lbl">✏️ Fill in the Blanks — Answers</div>
+      <div class="act-sent">My grace is <span class="blank">sufficient</span> for you, for my power is made perfect in <span class="blank">weakness</span>.</div>
+      <div class="opts-lbl">FIVE OPTIONS TO READ ALOUD:</div>
+      <div class="chips"><div class="chip c">sufficient ✓</div><div class="chip c">weakness ✓</div><div class="chip w">available</div><div class="chip w">strength</div><div class="chip w">hidden</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">FP 4 →</button>
+  </div>
+</div>
+
+<!-- ═══════ FP4 ═══════ -->
+<div class="screen" id="s-fp4">
+  <div class="s-header"><span class="s-step">Focal Point 4 of 4</span><div class="s-dots" id="dots-fp4"></div></div>
+  <div class="timer-bar">
+    <div class="timer-display" id="td-fp4">15:00</div>
+    <div class="timer-label">minutes</div>
+    <div class="timer-btns">
+      <button class="t-btn go" id="tb-fp4" onclick="timerToggle('fp4')">▶</button>
+      <button class="t-btn" onclick="timerReset('fp4')">↺</button>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="stc" style="--glow:rgba(74,222,128,.12)">
+      <div class="stc-eye" style="color:var(--green)">Luke 6:22, 27–36 · 15 minutes</div>
+      <h2>Peace, Not a Doormat</h2>
+    </div>
+    <div class="verse-card">
+      <blockquote>"Blessed are you when people hate you, when they exclude you and insult you ... because of the Son of Man."</blockquote>
+      <cite>— Luke 6:22 (NIV)</cite>
+    </div>
+    <div class="card" id="c-fp4-intro">
+      <div class="card-head" onclick="toggleCard('c-fp4-intro')">
+        <div><div class="card-eye">Intro — Read or Tell This</div><div class="card-ttl">John's response to injustice</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p>John was falsely accused, tried, and exiled — yet his writing in Revelation 1 isn't bitter or angry. It's full of praise. Jesus taught His followers to expect this kind of treatment and told them how to respond.</p>
+        <p>In Luke 6, He says people will hate and exclude His followers — and calls that a <em>BLESSING</em>, not a curse. Then He goes further: love your enemies, do good to those who hate you, bless those who curse you.</p>
+        <p>This isn't about weakness or letting people walk all over you. It's about responding to unfairness the way Jesus did — with <em>strength under control.</em></p>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">1</div><div><div class="qa-q">According to Jesus in Luke 6:22, how should we feel when people exclude or insult us because of our faith?</div><div class="qa-type">Radio — pick one</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>"Blessed" — it's actually something to be glad about</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Ashamed — we must have done something wrong</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Furious — plan how to get back at them</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Hopeless — there's nothing we can do</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">"Blessed" doesn't mean it feels good — it means we're in good company and God sees and honors it, even when people don't.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">2</div><div><div class="qa-q">According to Luke 6:27–36, how should we treat people who are unkind to us? Pick ALL that apply.</div><div class="qa-type">Multi-select</div></div></div>
+      <div class="qa-body">
+        <div class="opt c"><span class="tick">✓</span><span>Love them</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Do good to them</span></div>
+        <div class="opt c"><span class="tick">✓</span><span>Bless them / pray for them</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Get even with them</span></div>
+        <div class="opt w"><span class="tick">✗</span><span>Talk badly about them to everyone else</span></div>
+        <div class="ans-txt" style="margin-top:8px;font-size:12px;color:var(--muted)">Jesus doesn't say "pretend it didn't happen" — He says actively choose kindness anyway. That only works with God's help.</div>
+      </div>
+    </div>
+
+    <div class="qa">
+      <div class="qa-head"><div class="qa-num">3</div><div><div class="qa-q">Is there a difference between being "at peace" with someone and being a "doormat"? What's the difference?</div><div class="qa-type">Open / discussion</div></div></div>
+      <div class="qa-body">
+        <div class="ans-lbl">✓ Guide Note</div>
+        <div class="ans-txt">Peace means you choose not to retaliate or hold bitterness — it's about your own heart. It does NOT mean you can't set boundaries, say no, walk away from danger, or tell a trusted adult about bullying or abuse. Loving your enemy doesn't mean staying silent about being harmed.</div>
+        <div class="push"><div class="push-lbl">→ Push Further</div><div class="push-txt">John didn't fight back against being exiled — but he also didn't pretend it was fine. What's the difference between staying silent out of fear vs. responding with peace?</div></div>
+      </div>
+    </div>
+
+    <div class="act">
+      <div class="act-lbl">✏️ Fill in the Blanks — Answers</div>
+      <div class="act-sent">But love your <span class="blank">enemies</span>, do good to them ... and you will be <span class="blank">children</span> of the Most High.</div>
+      <div class="opts-lbl">FIVE OPTIONS TO READ ALOUD:</div>
+      <div class="chips"><div class="chip c">enemies ✓</div><div class="chip c">children ✓</div><div class="chip w">friends</div><div class="chip w">judges</div><div class="chip w">servants</div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">Challenge →</button>
+  </div>
+</div>
+
+<!-- ═══════ CHALLENGE ═══════ -->
+<div class="screen" id="s-challenge">
+  <div class="s-header"><span class="s-step">Challenge + Closing</span><div class="s-dots" id="dots-challenge"></div></div>
+  <div class="timer-bar">
+    <div class="timer-display" id="td-challenge">05:00</div>
+    <div class="timer-label">minutes</div>
+    <div class="timer-btns">
+      <button class="t-btn go" id="tb-challenge" onclick="timerToggle('challenge')">▶</button>
+      <button class="t-btn" onclick="timerReset('challenge')">↺</button>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="stc" style="--glow:rgba(245,200,66,.12)">
+      <div class="stc-eye" style="color:var(--accent)">Closing · 5 minutes</div>
+      <h2>Challenge + Prayer</h2>
+    </div>
+
+    <div class="card open" id="c-ch-instr">
+      <div class="card-head" onclick="toggleCard('c-ch-instr')">
+        <div><div class="card-eye">Instructions</div><div class="card-ttl">How to run this section</div></div>
+        <div class="card-chevron">▾</div>
+      </div>
+      <div class="card-body">
+        <p>Let each teen choose ONE challenge for the week. Keep it low-pressure — the goal is one practical step, not a performance. Read the options aloud and let them pick. The student app has these options too, so they can tap their choice on their phones.</p>
+      </div>
+    </div>
+
+    <div class="ch-item"><div class="ch-ico">🏝️</div><div><div class="ch-ttl">Name Your Patmos</div><div class="ch-desc">Identify one hard, unfair, or lonely situation — and specifically hand it to God in prayer this week.</div></div></div>
+    <div class="ch-item"><div class="ch-ico">⚖️</div><div><div class="ch-ttl">Re-Rank It</div><div class="ch-desc">Next time something annoying happens, pause and ask: "Is this really as big a deal as it feels right now?"</div></div></div>
+    <div class="ch-item"><div class="ch-ico">💪</div><div><div class="ch-ttl">Weakness to Strength</div><div class="ch-desc">Tell God about one area where you feel weak or inadequate, and ask Him to use it.</div></div></div>
+    <div class="ch-item"><div class="ch-ico">🕊️</div><div><div class="ch-ttl">Respond With Peace</div><div class="ch-desc">Choose kindness toward someone who's been unkind — without becoming a doormat.</div></div></div>
+    <div class="ch-item"><div class="ch-ico">📖</div><div><div class="ch-ttl">Memorize Revelation 1:9</div><div class="ch-desc">Learn the key text by heart — say it out loud when things feel unfair.</div></div></div>
+
+    <div class="prayer" style="margin-top:6px">
+      <div class="prayer-lbl">🙏 Closing Prayer Suggestion</div>
+      <div class="prayer-txt">Thank God that He's present even in our hardest, loneliest, most unfair moments — just like He was with John on Patmos. Ask Him to help each person see their struggles with bigger-picture perspective, to find His strength in weakness, and to respond to unkindness the way Jesus taught.</div>
+    </div>
+
+    <div class="followup">
+      <div class="followup-lbl">📋 Follow-Up Next Week</div>
+      <div class="followup-txt">Start by asking: <em>"Did anyone try their challenge? What happened?"</em> Keep it low-pressure — just create space for whoever wants to share.</div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-ghost" onclick="goTo(0)">Back to Overview</button>
+  </div>
+</div>
+
+<script>
+const screens = ['s-overview','s-opener','s-fp1','s-fp2','s-fp3','s-fp4','s-challenge'];
+let current = 0;
+
+function goTo(idx) {
+  // pause current section timer before leaving
+  const fromKey = screens[current].replace('s-','');
+  if (timerState[fromKey] && timerState[fromKey].running) {
+    clearInterval(timerState[fromKey].interval);
+    timerState[fromKey].running = false;
+    const b = document.getElementById('tb-' + fromKey);
+    if (b) b.textContent = '▶';
+  }
+  const from = document.getElementById(screens[current]);
+  const to = document.getElementById(screens[idx]);
+  if (idx > current) from.classList.add('exit-left');
+  from.classList.remove('active');
+  setTimeout(() => from.classList.remove('exit-left'), 350);
+  to.classList.add('active');
+  to.classList.remove('exit-left');
+  const body = to.querySelector('.screen-body') || to.querySelector('.ov-body');
+  if (body) body.scrollTop = 0;
+  current = idx;
+  updateProgress();
+  updateDots();
+}
+function goNext() { if (current < screens.length - 1) goTo(current + 1); }
+function goBack() { if (current > 0) goTo(current - 1); }
+
+function updateProgress() {
+  document.getElementById('progress-bar').style.width = (current / (screens.length - 1) * 100) + '%';
+}
+const dotMap = {'dots-opener':1,'dots-fp1':2,'dots-fp2':3,'dots-fp3':4,'dots-fp4':5,'dots-challenge':6};
+function updateDots() {
+  Object.entries(dotMap).forEach(([id, si]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '';
+    for (let i = 1; i <= 6; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i < current ? ' done' : i === current ? ' current' : '');
+      el.appendChild(d);
+    }
+  });
+}
+
+function toggleCard(id) {
+  const c = document.getElementById(id);
+  c.classList.toggle('open');
+}
+
+// ── Timers ──
+const TIMER_TOTALS = { opener:600, fp1:1200, fp2:1200, fp3:1200, fp4:900, challenge:300 };
+const timerState = {};
+Object.keys(TIMER_TOTALS).forEach(k => { timerState[k] = { remaining: TIMER_TOTALS[k], running: false, interval: null }; });
+
+function timerToggle(key) {
+  const st = timerState[key];
+  const btn = document.getElementById('tb-' + key);
+  if (st.running) {
+    clearInterval(st.interval);
+    st.running = false;
+    btn.textContent = '▶';
+  } else {
+    if (st.remaining <= 0) return;
+    st.running = true;
+    btn.textContent = '⏸';
+    st.interval = setInterval(() => {
+      st.remaining--;
+      renderTimer(key);
+      if (st.remaining <= 0) {
+        clearInterval(st.interval);
+        st.running = false;
+        btn.textContent = '▶';
+      }
+    }, 1000);
+  }
+}
+
+function timerReset(key) {
+  const st = timerState[key];
+  clearInterval(st.interval);
+  st.running = false;
+  st.remaining = TIMER_TOTALS[key];
+  const btn = document.getElementById('tb-' + key);
+  if (btn) btn.textContent = '▶';
+  renderTimer(key);
+}
+
+function renderTimer(key) {
+  const st = timerState[key];
+  const el = document.getElementById('td-' + key);
+  if (!el) return;
+  const m = Math.floor(st.remaining / 60);
+  const s = st.remaining % 60;
+  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  const pct = st.remaining / TIMER_TOTALS[key];
+  el.className = 'timer-display' + (st.remaining <= 0 ? ' over' : pct <= 0.25 ? ' warn' : '');
+}
+
+updateProgress();
+updateDots();
+</script>
+</body>
+</html>
