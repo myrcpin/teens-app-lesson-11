@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Survivor: Patmos — Lesson 11</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f1a;
+  --surface: #161828;
+  --surface2: #1e2035;
+  --border: rgba(255,255,255,0.08);
+  --text: #eeeef5;
+  --muted: rgba(238,238,245,0.5);
+  --accent: #f5c842;
+  --accent2: #ff6b6b;
+  --accent3: #4ecdc4;
+  --accent4: #a78bfa;
+  --green: #4ade80;
+  --red: #f87171;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+input,
+input[type="text"],
+input:not([type="submit"]),
+[contenteditable="true"],
+[contenteditable="plaintext-only"],
+[contenteditable] {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: embed !important;
+  writing-mode: horizontal-tb !important;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  z-index: 100;
+  border-radius: 0 2px 2px 0;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(40px);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+.screen.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+.screen.exit-left { opacity: 0; transform: translateX(-40px); }
+
+.screen-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 18px 100px;
+}
+.screen-body::-webkit-scrollbar { display: none; }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 12px 18px 20px;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  display: flex;
+  gap: 10px;
+  z-index: 50;
+}
+.btn {
+  border: none;
+  border-radius: 50px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 14px 22px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { flex: 1; background: var(--accent); color: #0d0f1a; }
+.btn-secondary { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); padding: 14px 18px; }
+.btn-back { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); min-width: 52px; font-size: 18px; }
+
+#s-welcome { background: var(--bg); justify-content: center; align-items: center; text-align: center; padding: 32px 24px; }
+.welcome-badge {
+  background: rgba(245,200,66,0.12);
+  border: 1px solid rgba(245,200,66,0.3);
+  border-radius: 50px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: inline-block;
+}
+.welcome-title { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; line-height: 1.05; margin-bottom: 12px; }
+.welcome-title .hi { color: var(--accent); }
+.welcome-sub { font-size: 15px; color: var(--muted); line-height: 1.6; margin-bottom: 36px; }
+.name-input-wrap { width: 100%; max-width: 320px; margin: 0 auto 28px; }
+.name-input-wrap label {
+  display: block; font-size: 12px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 8px; text-align: left;
+}
+.name-input {
+  width: 100%; background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 13px 16px; color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; outline: none; transition: border-color 0.2s;
+}
+.name-input:focus { border-color: var(--accent); }
+.welcome-verse { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 32px; max-width: 340px; }
+.welcome-verse p { font-style: italic; font-size: 14px; line-height: 1.6; color: var(--text); margin-bottom: 6px; }
+.welcome-verse cite { font-size: 12px; color: var(--accent); font-weight: 600; }
+.start-btn {
+  background: var(--accent); color: #0d0f1a; border: none; border-radius: 50px;
+  padding: 16px 48px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.2s; box-shadow: 0 0 0 0 rgba(245,200,66,0.4);
+}
+.start-btn:active { transform: scale(0.96); }
+
+.s-header { padding: 16px 18px 0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.s-header-step { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.s-header-dots { display: flex; gap: 5px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); transition: background 0.3s, transform 0.3s; }
+.dot.done { background: var(--accent); border-color: var(--accent); }
+.dot.current { background: var(--accent2); border-color: var(--accent2); transform: scale(1.3); }
+
+.section-title-card {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; margin-bottom: 18px;
+  position: relative; overflow: hidden;
+}
+.section-title-card::before {
+  content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow, rgba(245,200,66,.15)) 0%, transparent 70%);
+}
+.section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.section-title-card h2 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; line-height: 1.15; }
+
+.story-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+.card-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.story-card p { font-size: 14.5px; line-height: 1.72; color: var(--text); }
+.story-card p + p { margin-top: 10px; }
+.story-card em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+.verse-card {
+  background: linear-gradient(135deg, rgba(78,205,196,0.08), rgba(78,205,196,0.03));
+  border: 1px solid rgba(78,205,196,0.25); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px;
+}
+.verse-card blockquote { font-style: italic; font-size: 15.5px; line-height: 1.65; color: var(--text); margin-bottom: 8px; }
+.verse-card cite { font-size: 12px; font-weight: 700; color: var(--accent3); letter-spacing: 0.5px; }
+
+.q-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+.q-header { padding: 15px 18px; display: flex; align-items: flex-start; gap: 12px; }
+.q-num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--accent4); color: white; font-size: 12px;
+  font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.q-text { font-size: 14.5px; font-weight: 500; line-height: 1.5; flex: 1; }
+.q-body { overflow: visible; }
+.q-body-inner { padding: 0 18px 16px; border-top: 1px solid var(--border); padding-top: 14px; }
+.q-hint { font-size: 12px; color: var(--muted); font-style: italic; margin-bottom: 10px; }
+.q-reflection { background: rgba(167,139,250,0.07); border: 1px solid rgba(167,139,250,0.2); border-radius: 10px; padding: 11px 13px; }
+.q-reflection label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent4); display: block; margin-bottom: 6px; }
+.q-reflection .edit-field {
+  width: 100%; background: transparent; border: none; outline: none; color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; line-height: 1.6; min-height: 60px;
+  direction: ltr !important; text-align: left !important; unicode-bidi: plaintext !important;
+  writing-mode: horizontal-tb !important; word-break: break-word; white-space: pre-wrap; cursor: text;
+}
+.q-reflection .edit-field:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
+
+.opener-field {
+  width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px;
+  line-height: 1.6; min-height: 80px; outline: none; direction: ltr !important; text-align: left !important;
+  unicode-bidi: plaintext !important; writing-mode: horizontal-tb !important; word-break: break-word;
+  white-space: pre-wrap; cursor: text; transition: border-color 0.2s;
+}
+.opener-field:focus { border-color: var(--accent); }
+.opener-field:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
+
+.fitb-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+.fitb-sentence { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 16px; line-height: 1.75; font-style: italic; margin-bottom: 16px; color: var(--text); }
+.blank-slot { display: inline-block; min-width: 100px; border-bottom: 2px solid var(--accent2); color: var(--accent2); font-weight: 700; font-style: normal; text-align: center; padding: 0 4px; transition: all 0.2s; }
+.blank-slot.filled-correct { color: var(--green); border-color: var(--green); }
+.blank-slot.filled-wrong { color: var(--red); border-color: var(--red); }
+.fitb-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.option-pill {
+  border: 1.5px solid var(--border); border-radius: 50px; padding: 9px 18px; font-size: 14px; font-weight: 600;
+  cursor: pointer; background: var(--surface2); color: var(--text); transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.option-pill:active { transform: scale(0.95); }
+.option-pill.selected { border-color: var(--accent); background: rgba(245,200,66,0.12); color: var(--accent); }
+.option-pill.correct-reveal { border-color: var(--green) !important; background: rgba(74,222,128,0.12) !important; color: var(--green) !important; }
+.option-pill.wrong-reveal { border-color: var(--red) !important; background: rgba(248,113,113,0.12) !important; color: var(--red) !important; }
+.option-pill.disabled { pointer-events: none; opacity: 0.5; }
+.check-btn {
+  width: 100%; background: var(--accent4); color: white; border: none; border-radius: 50px; padding: 13px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+}
+.check-btn:active { transform: scale(0.97); }
+.check-btn:disabled { opacity: 0.4; pointer-events: none; }
+.fitb-result { margin-top: 12px; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; font-weight: 600; text-align: center; display: none; animation: popIn 0.3s cubic-bezier(.4,0,.2,1); }
+@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.fitb-result.success { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3); color: var(--green); }
+.fitb-result.fail { background: rgba(248,113,113,0.09); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; }
+
+.challenge-intro { font-size: 15px; color: var(--muted); line-height: 1.65; margin-bottom: 20px; }
+.challenge-option {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px;
+  margin-bottom: 10px; cursor: pointer; display: flex; align-items: flex-start; gap: 14px; transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.challenge-option:active { transform: scale(0.98); }
+.challenge-option.chosen { border-color: var(--accent); background: rgba(245,200,66,0.07); }
+.ch-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.ch-label { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+.ch-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.ch-check {
+  margin-left: auto; width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.2s;
+}
+.challenge-option.chosen .ch-check { background: var(--accent); border-color: var(--accent); color: #0d0f1a; }
+
+#s-complete { background: var(--bg); }
+#s-complete .complete-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 32px 20px 60px; text-align: center; }
+#s-complete .complete-body::-webkit-scrollbar { display: none; }
+.complete-emoji { font-size: 60px; margin-bottom: 16px; display: block; animation: bounce 1s ease infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+.complete-title { font-family: 'Syne', sans-serif; font-size: 34px; font-weight: 800; margin-bottom: 10px; line-height: 1.1; }
+.complete-title span { color: var(--accent); }
+.complete-sub { font-size: 14.5px; color: var(--muted); line-height: 1.65; max-width: 300px; margin: 0 auto 24px; }
+.score-ring { width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; position: relative; flex-shrink: 0; }
+.score-ring svg { position: absolute; inset: 0; width: 110px; height: 110px; transform: rotate(-90deg); }
+.score-ring .ring-track { fill: none; stroke: var(--surface2); stroke-width: 6; }
+.score-ring .ring-fill { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1) 0.4s; }
+.score-num { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--accent); position: relative; z-index: 1; line-height: 1; }
+.punch-lines { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; width: 100%; max-width: 360px; margin: 0 auto; text-align: left; }
+.punch-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; text-align: center; }
+.punch-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; font-style: italic; line-height: 1.5; color: var(--text); }
+.punch-item:last-child { border-bottom: none; }
+.punch-item span { display: block; font-style: normal; font-size: 11px; color: var(--accent); margin-top: 3px; font-weight: 700; }
+
+.opener-warm { background: rgba(245,200,66,0.06); border: 1px solid rgba(245,200,66,0.18); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+.opener-q { font-size: 15px; font-weight: 600; line-height: 1.5; margin-bottom: 12px; color: var(--accent); }
+
+.mt8 { margin-top: 8px; } .mt14 { margin-top: 14px; } .mt20 { margin-top: 20px; }
+.instruction-text { font-size: 13px; color: var(--muted); margin-bottom: 10px; font-style: italic; }
+.open-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent4); margin-bottom: 8px; }
+
+.mc-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.mc-option {
+  display: flex; align-items: flex-start; gap: 12px; background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; cursor: pointer; transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.mc-option:active { transform: scale(0.98); }
+.mc-box { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.18s; font-size: 13px; color: transparent; }
+.mc-option span { font-size: 14px; line-height: 1.5; color: var(--text); }
+.mc-option.selected { border-color: var(--accent4); background: rgba(167,139,250,0.1); }
+.mc-option.selected .mc-box { background: var(--accent4); border-color: var(--accent4); color: white; }
+.mc-option.selected .mc-box::after { content: '✓'; }
+.mc-option.revealed-correct { border-color: var(--green) !important; background: rgba(74,222,128,0.1) !important; pointer-events: none; }
+.mc-option.revealed-correct .mc-box { background: var(--green) !important; border-color: var(--green) !important; color: white !important; }
+.mc-option.revealed-correct .mc-box::after { content: '✓'; }
+.mc-option.revealed-wrong { border-color: var(--red) !important; background: rgba(248,113,113,0.08) !important; pointer-events: none; }
+.mc-option.revealed-wrong .mc-box { background: var(--red) !important; border-color: var(--red) !important; color: white !important; }
+.mc-option.revealed-wrong .mc-box::after { content: '✗'; }
+.mc-option.revealed-missed { border-color: var(--green) !important; background: rgba(74,222,128,0.05) !important; pointer-events: none; opacity: 0.75; }
+.mc-option.revealed-missed .mc-box { border-color: var(--green) !important; }
+
+.radio-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.radio-option {
+  display: flex; align-items: center; gap: 12px; background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.18s ease;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.radio-option:active { transform: scale(0.98); }
+.radio-dot { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
+.radio-option span { font-size: 14px; line-height: 1.45; color: var(--text); }
+.radio-option.selected { border-color: var(--accent4); background: rgba(167,139,250,0.1); }
+.radio-option.selected .radio-dot { border-color: var(--accent4); background: var(--accent4); box-shadow: inset 0 0 0 4px var(--surface2); }
+.radio-option.revealed-correct { border-color: var(--green) !important; background: rgba(74,222,128,0.1) !important; pointer-events: none; }
+.radio-option.revealed-correct .radio-dot { border-color: var(--green) !important; background: var(--green) !important; box-shadow: inset 0 0 0 4px var(--surface2) !important; }
+.radio-option.revealed-wrong { border-color: var(--red) !important; background: rgba(248,113,113,0.08) !important; pointer-events: none; }
+.radio-option.revealed-wrong .radio-dot { border-color: var(--red) !important; background: var(--red) !important; box-shadow: inset 0 0 0 4px var(--surface2) !important; }
+.radio-option.revealed-neutral { pointer-events: none; opacity: 0.5; }
+
+.reveal-btn {
+  width: 100%; background: transparent; border: 1.5px solid var(--accent4); border-radius: 50px; padding: 11px;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent4);
+  cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+}
+.reveal-btn:active { transform: scale(0.97); }
+.reveal-btn.done { border-color: var(--green); color: var(--green); pointer-events: none; }
+
+.section-img { width: 100%; height: 185px; object-fit: cover; border-radius: var(--radius); margin-bottom: 14px; display: block; background: var(--surface2); opacity: 0; transition: opacity 0.4s ease; }
+.section-img.loaded { opacity: 1; }
+.img-caption { font-size: 11px; color: var(--muted); text-align: center; margin-top: -8px; margin-bottom: 14px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar" style="width:0%"></div>
+
+<!-- ════════════════════════ WELCOME ════════════════════════ -->
+<div class="screen active" id="s-welcome">
+  <div class="welcome-badge">Cornerstone Connections · Lesson 11</div>
+  <h1 class="welcome-title">Survivor: <span class="hi">Patmos</span></h1>
+  <p class="welcome-sub">Exiled. Alone. Persecuted. And yet — given the most incredible vision in the whole Bible.</p>
+
+  <div class="welcome-verse">
+    <p>"I, John, your brother and companion in the suffering and kingdom and patient endurance that are ours in Jesus, was on the island of Patmos because of the word of God and the testimony of Jesus."</p>
+    <cite>— Revelation 1:9 (NIV)</cite>
+  </div>
+
+  <div class="name-input-wrap">
+    <label>Your first name</label>
+    <input class="name-input" type="text" id="name-input" dir="ltr" placeholder="Type your name..." maxlength="24" autocomplete="off">
+  </div>
+
+  <button class="start-btn" onclick="startLesson()">Let's Go →</button>
+</div>
+
+<!-- ════════════════════════ OPENER ════════════════════════ -->
+<div class="screen" id="s-opener">
+  <div class="s-header">
+    <span class="s-header-step">Opener</span>
+    <div class="s-header-dots" id="dots-opener"></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-title-card" style="--accent-glow: rgba(245,200,66,0.15)">
+      <div class="section-eyebrow" style="color:var(--accent)">Warm-Up</div>
+      <h2>Rank Your Rage</h2>
+    </div>
+
+    <img class="section-img"
+      src="https://images.unsplash.com/photo-1601233749317-2f74e6da9b04?auto=format&fit=crop&w=800&h=370&q=80"
+      alt="Annoyed person with arms crossed"
+      onload="this.classList.add('loaded')"
+      onerror="this.style.display='none'">
+    <p class="img-caption">Be honest — how upset would YOU be?</p>
+
+    <div class="story-card">
+      <div class="card-label">😤 Real Talk</div>
+      <p>Some things ruin your whole day. Some things barely register. But here's the weird part — the SAME thing can wreck one person and not even bother another.</p>
+      <p style="margin-top:10px">Today we're meeting someone who got exiled to a prison island — hard labor, far from home, punished for telling the truth about Jesus. And from there, he wrote one of the most amazing books in the Bible. Let's see how he kept perspective.</p>
+    </div>
+
+    <div class="opener-warm">
+      <div class="opener-q">Rank each of these 1–10 (1 = "I'd be SO upset," 10 = "no big deal at all"). Then pick your TWO worst.</div>
+      <div class="opener-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="• Losing your keys
+• Sibling eats all your food
+• Phone battery dies
+• A 'D' on a final exam
+• A paper cut
+• Earbuds get stolen
+• A friend tells lies about you
+• Fender-bender accident
+• Internet down for 3 days
+
+Type your two worst here, and why..."></div>
+    </div>
+
+    <div class="verse-card" style="border-color: rgba(245,200,66,0.25); background: rgba(245,200,66,0.05)">
+      <blockquote>"The righteous person may have many troubles, but the Lord delivers him from them all."</blockquote>
+      <cite style="color:var(--accent)">— Psalm 34:19 (NIV)</cite>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">Next Section →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ FP 1 ════════════════════════ -->
+<div class="screen" id="s-fp1">
+  <div class="s-header">
+    <span class="s-header-step">Focal Point 1 of 4</span>
+    <div class="s-header-dots" id="dots-fp1"></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-title-card" style="--accent-glow: rgba(78,205,196,0.2)">
+      <div class="section-eyebrow" style="color:var(--accent3)">Revelation 1:1, 9</div>
+      <h2>Survivor: Patmos</h2>
+    </div>
+
+    <img class="section-img"
+      src="https://images.unsplash.com/photo-1483168527879-c66136b56105?auto=format&fit=crop&w=800&h=370&q=80"
+      alt="Dark storm clouds over ocean horizon"
+      onload="this.classList.add('loaded')"
+      onerror="this.style.display='none'">
+    <p class="img-caption">A rocky island, surrounded by sea. No way off. No way home.</p>
+
+    <div class="story-card">
+      <div class="card-label">📜 The Story</div>
+      <p>Imagine a reality show called <em>Survivor: Patmos</em>. One contestant: an old man named John. The setting: a rocky prison island, where Roman prisoners were sent to do backbreaking labor — smashing rocks in stone quarries, day after day, far from home and everyone they loved.</p>
+      <p>Why was John there? He hadn't stolen anything or hurt anyone. He was exiled because he kept telling people about Jesus — and the authorities wanted him silenced for good.</p>
+      <p>But here's the twist: it was ON that island, in the middle of that punishment, that John received the vision that became the entire book of Revelation — a message about Jesus that has encouraged Christians for 2,000 years.</p>
+    </div>
+
+    <div class="verse-card">
+      <blockquote>"I, John, your brother and companion in the suffering and kingdom and patient endurance that are ours in Jesus, was on the island of Patmos because of the word of God and the testimony of Jesus."</blockquote>
+      <cite>— Revelation 1:9 (NIV)</cite>
+    </div>
+
+    <!-- Q1: Open -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">1</div>
+        <div class="q-text">Why was John sent to the island of Patmos?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="q-hint">💡 The answer is right there in Revelation 1:9.</div>
+          <div class="q-reflection">
+            <label>My answer</label>
+            <div class="edit-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="Why was John there?"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2: Multi-select -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">2</div>
+        <div class="q-text">What was life like for a prisoner on Patmos? Pick ALL that apply.</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="mc-group">
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Hard, exhausting physical labor (breaking rocks)</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Far away from family and friends</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>A punishment meant to "break" even tough criminals</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>A relaxing beach vacation</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>A reward for good behaviour</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealMC(this)">Show Answers ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3: Open -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">3</div>
+        <div class="q-text">If you were stuck somewhere far from everyone you love — just for telling the truth about Jesus — what do you think you'd do with your time?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="open-label">✍️ Your answer</div>
+          <div class="edit-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="What would you do?"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FITB -->
+    <div class="fitb-card">
+      <div class="card-label">✏️ Activity — Fill in the Blanks</div>
+      <div class="instruction-text">Tap two options you think are correct, then tap Check.</div>
+      <div class="fitb-sentence">
+        I, John, your brother and companion in the <span class="blank-slot" id="b1-0">___</span> and kingdom and patient <span class="blank-slot" id="b1-1">___</span> that are ours in Jesus, was on the island of Patmos.
+      </div>
+      <div class="fitb-options" id="opts-fp1">
+        <div class="option-pill" data-correct="true" data-blank="0" onclick="selectPill(this, 'fp1')">suffering</div>
+        <div class="option-pill" data-correct="true" data-blank="1" onclick="selectPill(this, 'fp1')">endurance</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp1')">joy</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp1')">glory</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp1')">victory</div>
+      </div>
+      <button class="check-btn" id="check-fp1" onclick="checkFITB('fp1', ['suffering','endurance'], ['b1-0','b1-1'])" disabled>Check My Answers ✓</button>
+      <div class="fitb-result" id="result-fp1"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">Next Section →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ FP 2 ════════════════════════ -->
+<div class="screen" id="s-fp2">
+  <div class="s-header">
+    <span class="s-header-step">Focal Point 2 of 4</span>
+    <div class="s-header-dots" id="dots-fp2"></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-title-card" style="--accent-glow: rgba(255,107,107,0.2)">
+      <div class="section-eyebrow" style="color:var(--accent2)">2 Cor. 4:17 · 11:25-28</div>
+      <h2>Small Stuff vs. Real Stuff</h2>
+    </div>
+
+    <img class="section-img"
+      src="https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?auto=format&fit=crop&w=800&h=370&q=80"
+      alt="Waves crashing against rocky sea stacks"
+      onload="this.classList.add('loaded')"
+      onerror="this.style.display='none'">
+    <p class="img-caption">Some waves are bigger than others. Some are HUGE.</p>
+
+    <div class="story-card">
+      <div class="card-label">📜 The Story</div>
+      <p>Remember your "Rank Your Rage" list? A paper cut. A dead phone battery. Annoying, right?</p>
+      <p>Now here's what the apostle Paul actually went through: shipwrecked. Beaten with rods — more than once. Stoned by an angry crowd. Whipped. Hungry, cold, in constant danger (2 Cor. 11:25-28).</p>
+      <p>And how does Paul describe ALL of that? <em>"Light and momentary troubles"</em> — because he's comparing it to something far bigger: the eternal glory waiting for him with God.</p>
+      <p>Perspective doesn't make hard things fake. But it CAN make them feel smaller compared to the bigger picture.</p>
+    </div>
+
+    <div class="verse-card">
+      <blockquote>"For our light and momentary troubles are achieving for us an eternal glory that far outweighs them all."</blockquote>
+      <cite>— 2 Corinthians 4:17 (NIV)</cite>
+    </div>
+
+    <!-- Q1: Radio -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">1</div>
+        <div class="q-text">According to 2 Corinthians 4:17, how does Paul describe his troubles — even shipwrecks and beatings?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="q-hint">💡 It's two words, both in the verse above.</div>
+          <div class="radio-group">
+            <div class="radio-option correct" onclick="selectRadio(this)"><div class="radio-dot"></div><span>Light and momentary</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>Unbearable and permanent</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>Too much for anyone to handle</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>God's punishment for sin</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealRadio(this)">Show Answer ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2: Multi-select -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">2</div>
+        <div class="q-text">Which of these did Paul actually go through (2 Cor. 11:25-28)? Pick ALL that apply.</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="mc-group">
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Shipwrecked</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Beaten with rods</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Stoned by a crowd</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>Stayed in five-star hotels</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>Had an easy, stress-free life</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealMC(this)">Show Answers ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3: Open -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">3</div>
+        <div class="q-text">Now that you've heard what Paul went through — would any of your "Rank Your Rage" answers change? Why or why not?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="open-label">✍️ Your answer</div>
+          <div class="edit-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="Would anything change? Be honest!"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FITB -->
+    <div class="fitb-card">
+      <div class="card-label">✏️ Activity — Fill in the Blanks</div>
+      <div class="instruction-text">Tap two options you think are correct, then tap Check.</div>
+      <div class="fitb-sentence">
+        For our light and <span class="blank-slot" id="b2-0">___</span> troubles are achieving for us an eternal glory that far <span class="blank-slot" id="b2-1">___</span> them all.
+      </div>
+      <div class="fitb-options" id="opts-fp2">
+        <div class="option-pill" data-correct="true" data-blank="0" onclick="selectPill(this, 'fp2')">momentary</div>
+        <div class="option-pill" data-correct="true" data-blank="1" onclick="selectPill(this, 'fp2')">outweighs</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp2')">permanent</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp2')">ignores</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp2')">ends</div>
+      </div>
+      <button class="check-btn" id="check-fp2" onclick="checkFITB('fp2', ['momentary','outweighs'], ['b2-0','b2-1'])" disabled>Check My Answers ✓</button>
+      <div class="fitb-result" id="result-fp2"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">Next Section →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ FP 3 ════════════════════════ -->
+<div class="screen" id="s-fp3">
+  <div class="s-header">
+    <span class="s-header-step">Focal Point 3 of 4</span>
+    <div class="s-header-dots" id="dots-fp3"></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-title-card" style="--accent-glow: rgba(167,139,250,0.2)">
+      <div class="section-eyebrow" style="color:var(--accent4)">2 Corinthians 12:9-10</div>
+      <h2>Strong in Weakness</h2>
+    </div>
+
+    <img class="section-img"
+      src="https://images.unsplash.com/photo-1495567720989-cebdbdd97913?auto=format&fit=crop&w=800&h=370&q=80"
+      alt="Hand reaching for the sunset, full of hope"
+      onload="this.classList.add('loaded')"
+      onerror="this.style.display='none'">
+    <p class="img-caption">Reaching out when you've got nothing left to give.</p>
+
+    <div class="story-card">
+      <div class="card-label">📜 The Story</div>
+      <p>Paul had something he called a "thorn" — some kind of ongoing pain or struggle the Bible doesn't fully explain. Three times, Paul begged God to take it away.</p>
+      <p>God's answer wasn't "yes" or "no." It was something better: <em>"My grace is sufficient for you, for my power is made perfect in weakness."</em></p>
+      <p>Paul's response is wild — he says he'll actually be GLAD about his weaknesses, insults, and hardships. Not because pain feels good, but because it's in those exact moments that God's power shows up the most clearly.</p>
+    </div>
+
+    <div class="verse-card">
+      <blockquote>"My grace is sufficient for you, for my power is made perfect in weakness. ... For when I am weak, then I am strong."</blockquote>
+      <cite>— 2 Corinthians 12:9, 10 (NIV)</cite>
+    </div>
+
+    <!-- Q1: Radio -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">1</div>
+        <div class="q-text">When Paul asked God to take away his weakness, what did God say?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="radio-group">
+            <div class="radio-option correct" onclick="selectRadio(this)"><div class="radio-dot"></div><span>"My grace is sufficient for you — my power is made perfect in weakness"</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>"I'll remove it right away"</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>"You don't have enough faith"</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>"Ask me again later"</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealRadio(this)">Show Answer ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2: Multi-select -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">2</div>
+        <div class="q-text">According to Paul, which of these can actually become a place where God's power shows up? Pick ALL that apply.</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="q-hint">💡 Re-read the verse above — Paul lists several things he "delights in."</div>
+          <div class="mc-group">
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Weaknesses</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Insults</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Hardships and difficulties</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>Having everything go perfectly, all the time</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>Never needing anyone's help</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealMC(this)">Show Answers ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3: Open -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">3</div>
+        <div class="q-text">Think of a time you felt weak, embarrassed, or like you couldn't do something. Could God's strength have shown up in that moment? How?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="open-label">✍️ Your answer</div>
+          <div class="edit-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="Write your thoughts here..."></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FITB -->
+    <div class="fitb-card">
+      <div class="card-label">✏️ Activity — Fill in the Blanks</div>
+      <div class="instruction-text">Tap two options you think are correct, then tap Check.</div>
+      <div class="fitb-sentence">
+        My grace is <span class="blank-slot" id="b3-0">___</span> for you, for my power is made perfect in <span class="blank-slot" id="b3-1">___</span>.
+      </div>
+      <div class="fitb-options" id="opts-fp3">
+        <div class="option-pill" data-correct="true" data-blank="0" onclick="selectPill(this, 'fp3')">sufficient</div>
+        <div class="option-pill" data-correct="true" data-blank="1" onclick="selectPill(this, 'fp3')">weakness</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp3')">available</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp3')">strength</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp3')">hidden</div>
+      </div>
+      <button class="check-btn" id="check-fp3" onclick="checkFITB('fp3', ['sufficient','weakness'], ['b3-0','b3-1'])" disabled>Check My Answers ✓</button>
+      <div class="fitb-result" id="result-fp3"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">Next Section →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ FP 4 ════════════════════════ -->
+<div class="screen" id="s-fp4">
+  <div class="s-header">
+    <span class="s-header-step">Focal Point 4 of 4</span>
+    <div class="s-header-dots" id="dots-fp4"></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-title-card" style="--accent-glow: rgba(74,222,128,0.15)">
+      <div class="section-eyebrow" style="color:var(--green)">Luke 6:22, 27-36</div>
+      <h2>Peace, Not a Doormat</h2>
+    </div>
+
+    <img class="section-img"
+      src="https://images.unsplash.com/photo-1518621012420-8ab10887ce31?auto=format&fit=crop&w=800&h=370&q=80"
+      alt="A hand reaching up towards a cloudy sky"
+      onload="this.classList.add('loaded')"
+      onerror="this.style.display='none'">
+    <p class="img-caption">Reaching toward peace, even when life isn't fair.</p>
+
+    <div class="story-card">
+      <div class="card-label">📜 The Story</div>
+      <p>John was falsely accused, put on trial, and exiled — yet his writing in Revelation 1 isn't bitter or angry. It's full of praise: he calls Jesus "the faithful witness," talks about being freed from sin, and breaks into "to Him be glory and power forever and ever!"</p>
+      <p>Jesus actually taught His followers to expect this kind of treatment — and told them how to respond. In Luke 6, He says people will hate, exclude, and insult His followers — and calls that a BLESSING, not a curse. Then He goes further: love your enemies, do good to those who hate you, bless those who curse you.</p>
+      <p>This isn't about being weak or letting people walk all over you. It's about responding to unfairness the way Jesus did — with strength under control.</p>
+    </div>
+
+    <div class="verse-card">
+      <blockquote>"Blessed are you when people hate you, when they exclude you and insult you ... because of the Son of Man."</blockquote>
+      <cite>— Luke 6:22 (NIV)</cite>
+    </div>
+
+    <!-- Q1: Radio -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">1</div>
+        <div class="q-text">According to Jesus in Luke 6:22, how should we feel when people exclude or insult us because of our faith?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="radio-group">
+            <div class="radio-option correct" onclick="selectRadio(this)"><div class="radio-dot"></div><span>"Blessed" — it's actually something to be glad about</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>Ashamed — we must have done something wrong</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>Furious — plan how to get back at them</span></div>
+            <div class="radio-option" onclick="selectRadio(this)"><div class="radio-dot"></div><span>Hopeless — there's nothing we can do</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealRadio(this)">Show Answer ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2: Multi-select -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">2</div>
+        <div class="q-text">According to Luke 6:27-36, how should we treat people who are unkind to us? Pick ALL that apply.</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="mc-group">
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Love them</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Do good to them</span></div>
+            <div class="mc-option correct" onclick="toggleMC(this)"><div class="mc-box"></div><span>Bless them / pray for them</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>Get even with them</span></div>
+            <div class="mc-option" onclick="toggleMC(this)"><div class="mc-box"></div><span>Talk badly about them to everyone else</span></div>
+          </div>
+          <button class="reveal-btn" onclick="revealMC(this)">Show Answers ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3: Open -->
+    <div class="q-card">
+      <div class="q-header">
+        <div class="q-num">3</div>
+        <div class="q-text">Is there a difference between being "at peace" with someone and being a "doormat" (letting people walk all over you)? What's the difference?</div>
+      </div>
+      <div class="q-body">
+        <div class="q-body-inner">
+          <div class="q-hint">💡 Hint: peace doesn't mean staying silent if someone is hurting you.</div>
+          <div class="open-label">✍️ Your answer</div>
+          <div class="edit-field" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="What do you think?"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FITB -->
+    <div class="fitb-card">
+      <div class="card-label">✏️ Activity — Fill in the Blanks</div>
+      <div class="instruction-text">Tap two options you think are correct, then tap Check.</div>
+      <div class="fitb-sentence">
+        But love your <span class="blank-slot" id="b4-0">___</span>, do good to them ... and you will be <span class="blank-slot" id="b4-1">___</span> of the Most High.
+      </div>
+      <div class="fitb-options" id="opts-fp4">
+        <div class="option-pill" data-correct="true" data-blank="0" onclick="selectPill(this, 'fp4')">enemies</div>
+        <div class="option-pill" data-correct="true" data-blank="1" onclick="selectPill(this, 'fp4')">children</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp4')">friends</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp4')">judges</div>
+        <div class="option-pill" data-correct="false" onclick="selectPill(this, 'fp4')">servants</div>
+      </div>
+      <button class="check-btn" id="check-fp4" onclick="checkFITB('fp4', ['enemies','children'], ['b4-0','b4-1'])" disabled>Check My Answers ✓</button>
+      <div class="fitb-result" id="result-fp4"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">My Challenge →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ CHALLENGE ════════════════════════ -->
+<div class="screen" id="s-challenge">
+  <div class="s-header">
+    <span class="s-header-step">Your Challenge</span>
+    <div class="s-header-dots" id="dots-challenge"></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-title-card" style="--accent-glow: rgba(245,200,66,0.15)">
+      <div class="section-eyebrow" style="color:var(--accent)">This Week</div>
+      <h2>Pick Your Challenge</h2>
+    </div>
+
+    <p class="challenge-intro">Tap the challenge you're going to commit to this week. Just one. Seriously — which one?</p>
+
+    <div class="challenge-option" onclick="pickChallenge(this, 'patmos')">
+      <div class="ch-icon">🏝️</div>
+      <div style="flex:1">
+        <div class="ch-label">Name Your Patmos</div>
+        <div class="ch-desc">Identify one hard, unfair, or lonely situation you're facing — and specifically hand it to God in prayer this week.</div>
+      </div>
+      <div class="ch-check">✓</div>
+    </div>
+
+    <div class="challenge-option" onclick="pickChallenge(this, 'rerank')">
+      <div class="ch-icon">⚖️</div>
+      <div style="flex:1">
+        <div class="ch-label">Re-Rank It</div>
+        <div class="ch-desc">Next time something annoying happens, pause and ask: "Is this really as big a deal as it feels right now?"</div>
+      </div>
+      <div class="ch-check">✓</div>
+    </div>
+
+    <div class="challenge-option" onclick="pickChallenge(this, 'weakness')">
+      <div class="ch-icon">💪</div>
+      <div style="flex:1">
+        <div class="ch-label">Weakness to Strength</div>
+        <div class="ch-desc">Tell God about one area where you feel weak or not good enough — and ask Him to use it.</div>
+      </div>
+      <div class="ch-check">✓</div>
+    </div>
+
+    <div class="challenge-option" onclick="pickChallenge(this, 'peace')">
+      <div class="ch-icon">🕊️</div>
+      <div style="flex:1">
+        <div class="ch-label">Respond With Peace</div>
+        <div class="ch-desc">This week, choose kindness toward someone who's been unkind to you — without becoming a doormat.</div>
+      </div>
+      <div class="ch-check">✓</div>
+    </div>
+
+    <div class="challenge-option" onclick="pickChallenge(this, 'memorize')">
+      <div class="ch-icon">📖</div>
+      <div style="flex:1">
+        <div class="ch-label">Memorize Revelation 1:9</div>
+        <div class="ch-desc">Learn this week's key text by heart — say it out loud when things feel unfair.</div>
+      </div>
+      <div class="ch-check">✓</div>
+    </div>
+
+    <div class="story-card mt14" style="border-color: rgba(245,200,66,0.2)">
+      <div class="card-label" style="color:var(--accent)">📝 Why I chose this challenge</div>
+      <div class="opener-field" id="challenge-why" contenteditable="plaintext-only" dir="ltr" lang="en" inputmode="text" autocorrect="off" autocapitalize="off" spellcheck="false" data-placeholder="Write a sentence about why this matters to you right now..."></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="btn btn-back" onclick="goBack()">←</button>
+    <button class="btn btn-primary" onclick="goNext()">Finish →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════ COMPLETE ════════════════════════ -->
+<div class="screen" id="s-complete">
+  <div class="complete-body">
+    <span class="complete-emoji" id="complete-emoji">🏝️</span>
+    <h1 class="complete-title">You survived,<br><span id="complete-name">friend</span>!</h1>
+    <p class="complete-sub" id="complete-msg">You engaged with every section, filled in the blanks, and picked your challenge. Even on a hard island, God can give the best vision.</p>
+
+    <div class="score-ring" id="score-ring">
+      <svg viewBox="0 0 100 100">
+        <circle class="ring-track" cx="50" cy="50" r="45"/>
+        <circle class="ring-fill" cx="50" cy="50" r="45" id="score-circle"/>
+      </svg>
+      <span class="score-num" id="score-display">0/4</span>
+    </div>
+
+    <div class="punch-lines">
+      <div class="punch-title">Verses to carry with you</div>
+      <div class="punch-item">"The righteous person may have many troubles, but the Lord delivers him from them all."<span>Psalm 34:19</span></div>
+      <div class="punch-item">"I, John... was on the island of Patmos because of the word of God and the testimony of Jesus."<span>Revelation 1:9</span></div>
+      <div class="punch-item">"Our light and momentary troubles are achieving for us an eternal glory that far outweighs them all."<span>2 Corinthians 4:17</span></div>
+      <div class="punch-item">"My grace is sufficient for you, for my power is made perfect in weakness."<span>2 Corinthians 12:9</span></div>
+      <div class="punch-item">"Blessed are you when people hate you... because of the Son of Man."<span>Luke 6:22</span></div>
+      <div class="punch-item">"Love your enemies, do good to them... and you will be children of the Most High."<span>Luke 6:35</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const screens = ['s-welcome','s-opener','s-fp1','s-fp2','s-fp3','s-fp4','s-challenge','s-complete'];
+let current = 0;
+let userName = '';
+let scores = { fp1: null, fp2: null, fp3: null, fp4: null };
+let selectedPills = { fp1: [], fp2: [], fp3: [], fp4: [] };
+let chosenChallenge = null;
+const totalFPs = 4;
+
+function goTo(index) {
+  const from = document.getElementById(screens[current]);
+  const to   = document.getElementById(screens[index]);
+  if (index > current) from.classList.add('exit-left');
+  from.classList.remove('active');
+  setTimeout(() => from.classList.remove('exit-left'), 350);
+  to.classList.add('active');
+  to.classList.remove('exit-left');
+  const body = to.querySelector('.screen-body') || to.querySelector('.complete-body');
+  if (body) body.scrollTop = 0;
+  current = index;
+  updateProgress();
+  updateDots();
+}
+
+function goNext() {
+  if (current < screens.length - 1) goTo(current + 1);
+  if (screens[current] === 's-complete') showComplete();
+}
+
+function goBack() {
+  if (current > 0) goTo(current - 1);
+}
+
+function startLesson() {
+  const val = document.getElementById('name-input').value.trim();
+  userName = val || 'Friend';
+  goTo(1);
+}
+
+function updateProgress() {
+  const pct = (current / (screens.length - 1)) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+const dotContainers = {
+  'dots-opener': 1,
+  'dots-fp1': 2,
+  'dots-fp2': 3,
+  'dots-fp3': 4,
+  'dots-fp4': 5,
+  'dots-challenge': 6,
+};
+function updateDots() {
+  Object.entries(dotContainers).forEach(([id, screenIdx]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '';
+    for (let i = 1; i <= 6; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      if (i < current) d.classList.add('done');
+      else if (i === current) d.classList.add('current');
+      el.appendChild(d);
+    }
+  });
+}
+
+function toggleMC(option) {
+  option.classList.toggle('selected');
+}
+
+function revealMC(btn) {
+  const group = btn.previousElementSibling;
+  const options = group.querySelectorAll('.mc-option');
+  options.forEach(opt => {
+    const isCorrect = opt.classList.contains('correct');
+    const isSelected = opt.classList.contains('selected');
+    opt.classList.remove('selected');
+    if (isCorrect && isSelected) opt.classList.add('revealed-correct');
+    else if (!isCorrect && isSelected) opt.classList.add('revealed-wrong');
+    else if (isCorrect && !isSelected) opt.classList.add('revealed-missed');
+    else opt.classList.add('revealed-neutral');
+    opt.style.pointerEvents = 'none';
+  });
+  btn.textContent = '✓ Answers shown';
+  btn.classList.add('done');
+}
+
+function selectRadio(option) {
+  const group = option.closest('.radio-group');
+  group.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+  option.classList.add('selected');
+}
+
+function revealRadio(btn) {
+  const group = btn.previousElementSibling;
+  const options = group.querySelectorAll('.radio-option');
+  options.forEach(opt => {
+    const isCorrect = opt.classList.contains('correct');
+    const isSelected = opt.classList.contains('selected');
+    opt.classList.remove('selected');
+    if (isCorrect) opt.classList.add('revealed-correct');
+    else if (isSelected) opt.classList.add('revealed-wrong');
+    else opt.classList.add('revealed-neutral');
+    opt.style.pointerEvents = 'none';
+  });
+  btn.textContent = '✓ Answer shown';
+  btn.classList.add('done');
+}
+
+function selectPill(pill, fpKey) {
+  const container = document.getElementById('opts-' + fpKey);
+  const pills = Array.from(container.querySelectorAll('.option-pill'));
+  const selected = selectedPills[fpKey];
+
+  if (pill.classList.contains('selected')) {
+    pill.classList.remove('selected');
+    const idx = selected.indexOf(pill.textContent.trim());
+    if (idx > -1) selected.splice(idx, 1);
+  } else {
+    if (selected.length >= 2) {
+      const first = pills.find(p => p.classList.contains('selected'));
+      if (first) {
+        first.classList.remove('selected');
+        const idx = selected.indexOf(first.textContent.trim());
+        if (idx > -1) selected.splice(idx, 1);
+      }
+    }
+    pill.classList.add('selected');
+    selected.push(pill.textContent.trim());
+  }
+
+  const checkBtn = document.getElementById('check-' + fpKey);
+  checkBtn.disabled = selected.length < 2;
+}
+
+function checkFITB(fpKey, correctAnswers, blankIds) {
+  const container = document.getElementById('opts-' + fpKey);
+  const pills = Array.from(container.querySelectorAll('.option-pill'));
+  const result = document.getElementById('result-' + fpKey);
+  const selected = selectedPills[fpKey];
+
+  let allCorrect = true;
+  const sortedCorrect = [...correctAnswers].sort();
+  const sortedSelected = [...selected].sort();
+  const isCorrect = JSON.stringify(sortedSelected) === JSON.stringify(sortedCorrect);
+
+  blankIds.forEach((bid, i) => {
+    const slot = document.getElementById(bid);
+    const answer = correctAnswers[i];
+    slot.textContent = answer;
+    if (selected.includes(answer)) {
+      slot.className = 'blank-slot filled-correct';
+    } else {
+      slot.className = 'blank-slot filled-wrong';
+      allCorrect = false;
+    }
+  });
+
+  pills.forEach(p => {
+    p.classList.remove('selected');
+    const isCorr = p.dataset.correct === 'true';
+    if (isCorr) p.classList.add('correct-reveal');
+    else if (selected.includes(p.textContent.trim())) p.classList.add('wrong-reveal');
+    else p.classList.add('disabled');
+  });
+
+  scores[fpKey] = isCorrect;
+
+  result.style.display = 'block';
+  if (isCorrect) {
+    result.className = 'fitb-result success';
+    result.textContent = '🎉 Perfect! Both answers correct!';
+  } else {
+    result.className = 'fitb-result fail';
+    result.textContent = '✗ Not quite — the correct answers are highlighted in green above.';
+  }
+
+  document.getElementById('check-' + fpKey).disabled = true;
+}
+
+function pickChallenge(el, key) {
+  document.querySelectorAll('.challenge-option').forEach(o => o.classList.remove('chosen'));
+  el.classList.add('chosen');
+  chosenChallenge = key;
+}
+
+function showComplete() {
+  document.getElementById('complete-name').textContent = userName;
+
+  let correct = Object.values(scores).filter(s => s === true).length;
+  document.getElementById('score-display').textContent = correct + '/4';
+
+  const circle = document.getElementById('score-circle');
+  const circumference = 283;
+  const offset = circumference - (correct / 4) * circumference;
+  circle.style.strokeDashoffset = circumference;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      circle.style.strokeDashoffset = offset;
+    });
+  });
+
+  const msgs = {
+    4: "You nailed every single activity. Even on Patmos, John kept his eyes on Jesus — and so did you today. 🔥",
+    3: "Really strong work today. One slip — but your challenge choice shows you're taking this seriously.",
+    2: "Solid effort. The important thing isn't a perfect score — it's whether you'll carry this into your week.",
+    1: "You showed up. That already counts. Now carry your challenge into the week.",
+    0: "Hey — you're here. That counts. Take your challenge seriously and watch what God does."
+  };
+  document.getElementById('complete-msg').textContent = msgs[correct] || msgs[0];
+
+  const cb = document.querySelector('#s-complete .complete-body');
+  if (cb) cb.scrollTop = 0;
+}
+
+updateProgress();
+updateDots();
+
+function enforceLTR(el) {
+  el.setAttribute('dir', 'ltr');
+  el.setAttribute('lang', 'en');
+  el.style.setProperty('direction', 'ltr', 'important');
+  el.style.setProperty('text-align', 'left', 'important');
+  el.style.setProperty('unicode-bidi', 'embed', 'important');
+  el.style.setProperty('writing-mode', 'horizontal-tb', 'important');
+}
+
+document.querySelectorAll('[contenteditable], input').forEach(enforceLTR);
+
+['focus','click','touchstart','input','keydown','keyup','compositionstart','compositionend'].forEach(function(evt) {
+  document.addEventListener(evt, function(e) {
+    var el = e.target;
+    if (el.hasAttribute('contenteditable') || el.tagName === 'INPUT') {
+      enforceLTR(el);
+    }
+  }, true);
+});
+
+document.addEventListener('focusin', function(e) {
+  var el = e.target;
+  if (!el.hasAttribute('contenteditable') && el.tagName !== 'INPUT') return;
+  enforceLTR(el);
+  setTimeout(function() {
+    var scrollParent = el.closest('.screen-body') || el.closest('.complete-body');
+    if (!scrollParent) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    var elRect = el.getBoundingClientRect();
+    var parentRect = scrollParent.getBoundingClientRect();
+    if (elRect.top > window.innerHeight * 0.45 || elRect.top < parentRect.top) {
+      scrollParent.scrollTo({ top: scrollParent.scrollTop + (elRect.top - parentRect.top) - 80, behavior: 'smooth' });
+    }
+  }, 320);
+});
+</script>
+</body>
+</html>
